@@ -9,6 +9,6 @@ export async function POST(request: Request) {
 		await InsertRoom(room);
 		return NextResponse.json({ message: "Room added successfully" });
 	} catch (error) {
-		return NextResponse.json({ error: "Failed to add room" });
+		return NextResponse.json({ error: "Failed to add room, error" + error });
 	}
 }

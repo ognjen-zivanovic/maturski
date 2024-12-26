@@ -9,6 +9,6 @@ export async function POST(request: Request) {
 		await UpdateRoom(room);
 		return NextResponse.json({ message: "Room updated successfully" });
 	} catch (error) {
-		return NextResponse.json({ error: "Failed to update room" });
+		return NextResponse.json({ error: "Failed to update room, error" + error });
 	}
 }

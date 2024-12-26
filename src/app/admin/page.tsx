@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { GetRooms } from "../../lib/querries";
 import type { Room } from "../../types/db/rooms";
 
 function bedSVG() {
@@ -75,7 +74,7 @@ export default function Admin() {
 			body: JSON.stringify(roomData),
 		});
 
-		const data = await response.json();
+		await response.json();
 	};
 
 	const handleEditRoom = async (e: React.FormEvent) => {
@@ -96,7 +95,7 @@ export default function Admin() {
 			body: JSON.stringify(roomData),
 		});
 
-		const data = await response.json();
+		await response.json();
 	};
 
 	useEffect(() => {
