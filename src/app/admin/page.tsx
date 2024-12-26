@@ -105,14 +105,15 @@ export default function Admin() {
 				throw new Error("Failed to fetch data");
 			}
 			const result = await response.json();
-			const groupedByFloor: Record<number, Room[]> = result.reduce((acc, item) => {
+
+			const groupedByFloor = result.reduce((acc: Record<number, Room[]>, item: Room) => {
 				const { floornum } = item;
 				if (!acc[floornum]) {
 					acc[floornum] = [];
 				}
 				acc[floornum].push(item);
 				return acc;
-			}, {});
+			}, {} as Record<number, Room[]>); // empty object is typed as Record<number, Room[]>
 
 			console.log("-----------------------------------");
 			setRooms(groupedByFloor);
