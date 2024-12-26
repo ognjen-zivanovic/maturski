@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { GetRooms } from "../../lib/querries";
+import type { Room } from "../../types/db/rooms";
 
 function bedSVG() {
 	return (
@@ -24,89 +26,119 @@ function bedSVG() {
 	);
 }
 
+enum Action {
+	None,
+	AddRoom,
+	EditRoom,
+}
+
 // with the typescript type
 
-const rooms = [
-	{
-		floorNum: "1",
-		rooms: [
-			{ id: "101", beds: 3 },
-			{ id: "102", beds: 2 },
-			{ id: "103", beds: 1 },
-			{ id: "104", beds: 1 },
-			{ id: "105", beds: 3 },
-			{ id: "106", beds: 2 },
-			{ id: "107", beds: 1 },
-			{ id: "108", beds: 2 },
-			{ id: "109", beds: 1 },
-			{ id: "110", beds: 3 },
-		],
-	},
-	{
-		floorNum: "2",
-		rooms: [
-			{ id: "201", beds: 1 },
-			{ id: "202", beds: 3 },
-			{ id: "203", beds: 2 },
-			{ id: "204", beds: 1 },
-			{ id: "205", beds: 2 },
-			{ id: "206", beds: 1 },
-			{ id: "207", beds: 3 },
-			{ id: "208", beds: 3 },
-			{ id: "209", beds: 2 },
-		],
-	},
-	{
-		floorNum: "3",
-		rooms: [
-			{ id: "301", beds: 1 },
-			{ id: "302", beds: 2 },
-			{ id: "303", beds: 3 },
-			{ id: "304", beds: 1 },
-			{ id: "305", beds: 2 },
-			{ id: "306", beds: 1 },
-		],
-	},
-	{
-		floorNum: "4",
-		rooms: [
-			{ id: "401", beds: 1 },
-			{ id: "402", beds: 2 },
-			{ id: "403", beds: 3 },
-			{ id: "404", beds: 1 },
-			{ id: "405", beds: 2 },
-			{ id: "406", beds: 1 },
-			{ id: "407", beds: 3 },
-			{ id: "408", beds: 3 },
-			{ id: "409", beds: 2 },
-		],
-	},
-];
-
 export default function Admin() {
-	const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+	const [rooms, setRooms] = useState<Record<number, Room[]>>({});
 
-	function handleRoomClick(roomId: string) {
-		setSelectedRoom(roomId);
+	const [id, setId] = useState<string | undefined>();
+	const [name, setName] = useState<string>("");
+	const [floornum, setFloornum] = useState<number>(0);
+	const [bednum, setBednum] = useState<number>(0);
+	const [action, setAction] = useState<Action>(Action.None);
+
+	function handleRoomClick(room: Room) {
+		setAction(Action.EditRoom);
+		setId(room.id!);
+		setName(room.name);
+		setFloornum(room.floornum);
+		setBednum(room.bednum);
 	}
+
+	function handleAddRoomClick() {
+		setAction(Action.AddRoom);
+		setId(undefined);
+		setName("");
+		setFloornum(0);
+		setBednum(0);
+	}
+	const handleAddRoom = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		const roomData = {
+			name,
+			floornum: floornum,
+			bednum: bednum,
+		};
+
+		const response = await fetch("/api/insertRoom", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(roomData),
+		});
+
+		const data = await response.json();
+	};
+
+	const handleEditRoom = async (e: React.FormEvent) => {
+		e.preventDefault();
+
+		const roomData = {
+			id,
+			name,
+			floornum: floornum,
+			bednum: bednum,
+		};
+
+		const response = await fetch("/api/updateRoom", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify(roomData),
+		});
+
+		const data = await response.json();
+	};
+
+	useEffect(() => {
+		async function fetchData() {
+			const response = await fetch("/api/getRooms");
+			if (!response.ok) {
+				throw new Error("Failed to fetch data");
+			}
+			const result = await response.json();
+			const groupedByFloor: Record<number, Room[]> = result.reduce((acc, item) => {
+				const { floornum } = item;
+				if (!acc[floornum]) {
+					acc[floornum] = [];
+				}
+				acc[floornum].push(item);
+				return acc;
+			}, {});
+
+			console.log("-----------------------------------");
+			setRooms(groupedByFloor);
+		}
+
+		fetchData();
+	}, []);
 
 	return (
 		<div className="flex h-screen w-screen flex-row bg-slate-100 text-blue-700">
 			<div className="flex-1">
-				<button>Add room</button>
-				{rooms.map((floorInfo) => (
-					<div key={floorInfo.floorNum} className="m-4">
-						<div className="font-bold">{"Floor " + floorInfo.floorNum}</div>
+				<button onClick={handleAddRoomClick}>Add room</button>
+				{Object.entries(rooms).map(([floor, rooms]) => (
+					<div key={floor} className="m-4">
+						<div className="font-bold">{"Floor " + floor}</div>
 						<div className="flex flex-row flex-wrap gap-4">
-							{floorInfo.rooms.map((roomInfo) => (
+							{rooms.map((roomInfo) => (
 								<button
-									onClick={() => handleRoomClick(roomInfo.id)}
-									key={roomInfo.id}
+									onClick={() => handleRoomClick(roomInfo)}
+									key={roomInfo.name}
 								>
 									<div className="flex h-16 w-16 flex-col justify-evenly rounded-lg border-2 border-blue-500 bg-gray-100">
-										<div className="text-center">{roomInfo.id}</div>
+										<div className="text-center">{roomInfo.name}</div>
 										<div className="flex flex-row items-center justify-evenly">
-											<div>{roomInfo.beds}</div>
+											<div>{roomInfo.bednum}</div>
 											{bedSVG()}
 										</div>
 									</div>
@@ -119,15 +151,17 @@ export default function Admin() {
 			<div className="w-72 bg-slate-300">
 				{
 					//input boxes for room number and floor
-					selectedRoom && (
+					(action === Action.EditRoom || action === Action.AddRoom) && (
 						<div className="p-4">
-							<div className="font-bold">Room {selectedRoom}</div>
+							<div className="font-bold">Room {id}</div>
 
 							<div className="m-4">
 								<div>Room</div>
 								<input
 									className="rounded-lg border-2 border-blue-500"
 									type="text"
+									value={name}
+									onChange={(e) => setName(e.target.value)}
 								/>
 							</div>
 							<div className="m-4">
@@ -135,6 +169,8 @@ export default function Admin() {
 								<input
 									className="rounded-lg border-2 border-blue-500"
 									type="number"
+									value={bednum}
+									onChange={(e) => setBednum(Number(e.target.value))}
 								/>
 							</div>
 							<div className="m-4">
@@ -142,8 +178,16 @@ export default function Admin() {
 								<input
 									className="rounded-lg border-2 border-blue-500"
 									type="text"
+									value={floornum}
+									onChange={(e) => setFloornum(Number(e.target.value))}
 								/>
 							</div>
+							{action === Action.AddRoom && (
+								<button onClick={handleAddRoom}>Add</button>
+							)}
+							{action === Action.EditRoom && (
+								<button onClick={handleEditRoom}>Edit</button>
+							)}
 						</div>
 					)
 				}
