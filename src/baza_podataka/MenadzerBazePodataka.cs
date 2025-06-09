@@ -508,7 +508,7 @@ CREATE TABLE gost_rezervacije (
         {
             for (int i = 1; i <= 10; i++)
             {
-                DodajSliku(i, "slike/slika_sobe.jpg");
+                DodajSliku(i, "slike/slika_sobe_" + i + ".jpg");
             }
         }
     }
