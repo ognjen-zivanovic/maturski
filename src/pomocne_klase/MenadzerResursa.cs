@@ -30,6 +30,7 @@ namespace HotelRezervacije
                 {
                     BitmapImage bitmapSlika = new BitmapImage();
                     bitmapSlika.BeginInit();
+                    bitmapSlika.CacheOption = BitmapCacheOption.OnLoad;
                     bitmapSlika.StreamSource = ms;
                     bitmapSlika.EndInit();
                     return bitmapSlika;
